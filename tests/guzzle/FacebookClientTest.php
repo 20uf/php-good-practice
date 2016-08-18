@@ -26,8 +26,6 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  */
 class FacebookClientTest extends \PHPUnit_Framework_TestCase
 {
-    private $clientFacebook;
-    private $guzzleClient;
     private $logger;
     private $config = ['app_id' => 'mockId', 'app_secret' => 'mockSecret'];
     private $mockJsonOauth = '{
@@ -57,6 +55,7 @@ class FacebookClientTest extends \PHPUnit_Framework_TestCase
             }
           ]
         }';
+    private $mockUrl = 'https://www.facebook.com/barackobama/posts/10154081443366749';
 
     /**
      * @setup
@@ -64,7 +63,6 @@ class FacebookClientTest extends \PHPUnit_Framework_TestCase
     public function setUp()
     {
         $this->logger = \Phake::mock(LoggerInterface::class);
-
     }
 
     /**
@@ -76,13 +74,13 @@ class FacebookClientTest extends \PHPUnit_Framework_TestCase
             new RequestException("Bad request", new Request('GET', 'v2.6/oauth/access_token')),
         ]);
 
-        $this->guzzleClient = new Client(['handler' => HandlerStack::create($guzzleMock)]);
+        $guzzleClient = new Client(['handler' => HandlerStack::create($guzzleMock)]);
 
-        $this->clientFacebook = \Phake::partialMock(FacebookClient::class, $this->config, $this->guzzleClient, $this->logger);
+        $clientFacebook = \Phake::partialMock(FacebookClient::class, $this->config, $guzzleClient, $this->logger);
 
         $this->expectException(\Exception::class);
 
-        $this->clientFacebook->getMessageFromUrl('https://www.facebook.com/barackobama/posts/10154081443366749');
+        $clientFacebook->getMessageFromUrl($this->mockUrl);
     }
 
     /**
@@ -96,11 +94,11 @@ class FacebookClientTest extends \PHPUnit_Framework_TestCase
             new Response(200, [], $this->mockJsonPosts),
         ]);
 
-        $this->guzzleClient = new Client(['handler' => HandlerStack::create($guzzleMock)]);
+        $guzzleClient = new Client(['handler' => HandlerStack::create($guzzleMock)]);
 
-        $this->clientFacebook = \Phake::partialMock(FacebookClient::class, $this->config, $this->guzzleClient, $this->logger);
+        $clientFacebook = \Phake::partialMock(FacebookClient::class, $this->config, $guzzleClient, $this->logger);
 
-        $result = $this->clientFacebook->getMessageFromUrl('https://www.facebook.com/barackobama/posts/10154081443366749');
+        $result = $clientFacebook->getMessageFromUrl($this->mockUrl);
 
         $mockToArray = json_decode($this->mockJsonPosts, true);
         $mockVerify = $mockToArray['data'][2];
@@ -113,7 +111,7 @@ class FacebookClientTest extends \PHPUnit_Framework_TestCase
     /**
      * @test
      */
-    public function shouldGetMessageNotFoundExeption()
+    public function shouldGetMessageNotFoundException()
     {
         $guzzleMock = new MockHandler([
             new Response(200, [], $this->mockJsonOauth),
@@ -121,13 +119,13 @@ class FacebookClientTest extends \PHPUnit_Framework_TestCase
             new Response(200, [], $this->mockJsonPosts),
         ]);
 
-        $this->guzzleClient = new Client(['handler' => HandlerStack::create($guzzleMock)]);
+        $guzzleClient = new Client(['handler' => HandlerStack::create($guzzleMock)]);
 
-        $this->clientFacebook = \Phake::partialMock(FacebookClient::class, $this->config, $this->guzzleClient, $this->logger);
+        $clientFacebook = \Phake::partialMock(FacebookClient::class, $this->config, $guzzleClient, $this->logger);
 
         $this->expectException(NotFoundHttpException::class);
 
-        $this->clientFacebook->getMessageFromUrl('https://www.facebook.com/barackobama/posts/123456789');
+        $clientFacebook->getMessageFromUrl('https://www.facebook.com/barackobama/posts/123456789');
     }
 
     /**
@@ -139,38 +137,38 @@ class FacebookClientTest extends \PHPUnit_Framework_TestCase
             new Response(200, [], $this->mockJsonOauth),
         ]);
 
-        $this->guzzleClient = new Client(['handler' => HandlerStack::create($guzzleMock)]);
+        $guzzleClient = new Client(['handler' => HandlerStack::create($guzzleMock)]);
 
-        $this->clientFacebook = \Phake::partialMock(FacebookClient::class, $this->config, $this->guzzleClient, $this->logger);
+        $clientFacebook = \Phake::partialMock(FacebookClient::class, $this->config, $guzzleClient, $this->logger);
 
         $this->expectException(\Exception::class);
 
-        $this->clientFacebook->getMessageFromUrl('https://mock.test');
+        $clientFacebook->getMessageFromUrl('https://mock.test');
     }
 
     /**
      * @test
      */
-    public function shouldGetUserException()
+    public function shouldUserGetAnException()
     {
         $guzzleMock = new MockHandler([
             new Response(200, [], $this->mockJsonOauth),
             new RequestException("Bad request", new Request('GET', '/')),
         ]);
 
-        $this->guzzleClient = new Client(['handler' => HandlerStack::create($guzzleMock)]);
+        $guzzleClient = new Client(['handler' => HandlerStack::create($guzzleMock)]);
 
-        $this->clientFacebook = \Phake::partialMock(FacebookClient::class, $this->config, $this->guzzleClient, $this->logger);
+        $clientFacebook = \Phake::partialMock(FacebookClient::class, $this->config, $guzzleClient, $this->logger);
 
         $this->expectException(\Exception::class);
 
-        $this->clientFacebook->getMessageFromUrl('https://www.facebook.com/barackobama/posts/123456789');
+        $clientFacebook->getMessageFromUrl($this->mockUrl);
     }
 
     /**
      * @test
      */
-    public function shouldGetPostsException()
+    public function shouldPostsGetAnException()
     {
         $guzzleMock = new MockHandler([
             new Response(200, [], $this->mockJsonOauth),
@@ -178,12 +176,12 @@ class FacebookClientTest extends \PHPUnit_Framework_TestCase
             new RequestException("Bad request", new Request('GET', '/')),
         ]);
 
-        $this->guzzleClient = new Client(['handler' => HandlerStack::create($guzzleMock)]);
+        $guzzleClient = new Client(['handler' => HandlerStack::create($guzzleMock)]);
 
-        $this->clientFacebook = \Phake::partialMock(FacebookClient::class, $this->config, $this->guzzleClient, $this->logger);
+        $clientFacebook = \Phake::partialMock(FacebookClient::class, $this->config, $guzzleClient, $this->logger);
 
         $this->expectException(\Exception::class);
 
-        $this->clientFacebook->getMessageFromUrl('https://www.facebook.com/barackobama/posts/123456789');
+        $clientFacebook->getMessageFromUrl($this->mockUrl);
     }
 }
